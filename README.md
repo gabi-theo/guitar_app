@@ -33,33 +33,37 @@ npm run dev        # http://localhost:5173 (proxies /api to :8000)
 
 Run backend tests: `cd backend && .venv\Scripts\python -m pytest`
 
-## Deployment (Vercel frontend + hosted backend)
+## Deployment (all on Vercel)
 
-The frontend deploys to Vercel as a static SPA; the Django API must be hosted
-separately (Railway, Render, Fly.io, a VPS — anything that runs
-Django + Postgres + Redis).
+Production: **https://shredtrainer.vercel.app** — two Vercel projects deploy
+from this repo on every push to `main`:
 
-**Frontend (Vercel):**
+- **`shredtrainer`** (Root Directory `frontend`) — static Vite SPA.
+  `frontend/vercel.json` proxies `/api/*` to the backend project
+  (same-origin, so no CORS in the browser) and adds the SPA fallback so
+  client-side routes survive refresh.
+- **`shredtrainer-api`** (Root Directory `backend`) — Django on Vercel's
+  Python serverless runtime (`backend/vercel.json` builds `config/wsgi.py`,
+  which exposes the `app` callable). Env vars: `SECRET_KEY`, `DEBUG=0`, and
+  `DATABASE_URL` injected by the Neon Postgres marketplace integration
+  (`settings.py` prefers `DATABASE_URL` over the discrete `DB_*` vars).
 
-1. Import the repo in Vercel and set **Root Directory** to `frontend`
-   (framework auto-detects as Vite; `frontend/vercel.json` adds the SPA
-   fallback so client-side routes work on refresh).
-2. Set the environment variable `VITE_API_URL` to the deployed API, including
-   the `/api` prefix — e.g. `https://your-backend.example.com/api`. When
-   unset, the app falls back to `/api` (the local Vite dev proxy).
+Redis is not deployed — nothing uses it yet (the `REDIS_URL` setting is a
+placeholder for Phase 5).
 
-**Backend (wherever it's hosted):**
+Migrations/seeding run locally against the production DB (Vercel functions
+are request-scoped): `vercel env pull`, then run `manage.py migrate` /
+`seed_exercises` with `DATABASE_URL` set to the pulled
+`DATABASE_URL_UNPOOLED` value.
 
-- `SECRET_KEY` — required; `DEBUG=0`.
-- `ALLOWED_HOSTS` — comma-separated backend hostnames.
-- `CORS_ALLOWED_ORIGINS` — comma-separated frontend origins, e.g.
-  `https://shredtrainer.vercel.app`. Any `https://*.vercel.app` origin is
-  also allowed via regex so Vercel preview deploys work (safe here: auth is
-  Bearer-token, not cookie-based).
-- `DB_NAME`/`DB_USER`/`DB_PASSWORD`/`DB_HOST`/`DB_PORT`, `REDIS_URL`.
-- Run `manage.py migrate` and `manage.py seed_exercises` once per environment.
+Serverless caveats: cold starts after idle; no websockets (Phase 5 live
+duels will need a different backend host); Django admin works but unstyled
+(no static file serving). Mic access requires HTTPS — Vercel provides it.
 
-Mic access requires HTTPS in production; Vercel provides it out of the box.
+If the backend ever moves off Vercel: set `VITE_API_URL` on the frontend
+project to the new API base (including `/api`) — the axios client prefers it
+over the same-origin `/api` proxy — and allow the frontend origin via the
+backend's `CORS_ALLOWED_ORIGINS`/`ALLOWED_HOSTS` env vars.
 
 Mic access works on `http://localhost` without HTTPS. Use headphones while
 practicing so the metronome/synth doesn't bleed into the microphone.
