@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(dataviz)",
+      "Skill(dataviz:*)",
+      "Bash(node scripts/validate_palette.js \"#ff6d3a,#45c489\" --mode dark --surface \"#1a1e26\")",
+      "Bash(node scripts/validate_palette.js \"#f45a24,#2fae74\" --mode dark --surface \"#1a1e26\")",
+      "Bash(node scripts/validate_palette.js \"#e84e18,#279e68\" --mode dark --surface \"#1a1e26\")",
+      "Skill(run)",
+      "Skill(run:*)",
+      "PowerShell(Get-Command chromium-cli -ErrorAction SilentlyContinue)",
+      "PowerShell(netstat -ano)",
+      "PowerShell(Get-Process -Id 28296 | Select-Object Id, ProcessName, Path, StartTime; \\(Get-CimInstance Win32_Process -Filter \"ProcessId=28296\"\\).CommandLine)",
+      "PowerShell(Stop-Process -Id 28296 -Force -Confirm:$false)",
+      "Bash(bash smoke.sh)",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"c:\\\\Users\\\\User\\\\shredtrainer\\\\backend\\\\goals\\\\services.py\"\\); $s = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $i = $s.IndexOf\\(\"Nail\"\\); $sub = $s.Substring\\($i, 40\\); $sub; \\($sub.ToCharArray\\(\\) | ForEach-Object { \"{0:x4}\" -f [int]$_ }\\) -join \" \")",
+      "Read(//c/Program Files \\(x86\\)/Microsoft/Edge/Application/**)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Bash(npm init *)",
+      "Bash(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i playwright --no-fund --no-audit)",
+      "Bash(node shots.mjs)",
+      "Bash(.venv/Scripts/python -c ' *)",
+      "Bash(npm run *)"
+    ]
+  }
+}
