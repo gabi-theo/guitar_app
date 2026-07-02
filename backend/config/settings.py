@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-insecure-secret-key")
 DEBUG = os.environ.get("DEBUG", "1") == "1"
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"] + [
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".vercel.app"] + [
     h for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h
 ]
 
@@ -57,16 +57,37 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", "shredtrainer"),
-        "USER": os.environ.get("DB_USER", "shredtrainer"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", "shredtrainer"),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5433"),
+# Hosted Postgres (Neon via Vercel Marketplace, Railway, Heroku, …) provides a
+# single DATABASE_URL; the discrete DB_* vars remain for local dev.
+_database_url = os.environ.get("DATABASE_URL")
+if _database_url:
+    from urllib.parse import parse_qs, urlsplit
+
+    _db = urlsplit(_database_url)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": _db.path.lstrip("/"),
+            "USER": _db.username or "",
+            "PASSWORD": _db.password or "",
+            "HOST": _db.hostname or "",
+            "PORT": str(_db.port or 5432),
+            "OPTIONS": {
+                "sslmode": parse_qs(_db.query).get("sslmode", ["require"])[0],
+            },
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME", "shredtrainer"),
+            "USER": os.environ.get("DB_USER", "shredtrainer"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", "shredtrainer"),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "5433"),
+        }
+    }
 
 AUTH_USER_MODEL = "accounts.User"
 
